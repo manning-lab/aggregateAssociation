@@ -1,0 +1,18 @@
+{
+  "group_assoc_wf.this_weights": "(optional) String?",
+  "group_assoc_wf.these_group_files": "Array[File]",
+  "group_assoc_wf.this_label": "String",
+  "group_assoc_wf.this_sample_file": "(optional) File?",
+  "group_assoc_wf.this_pval": "(optional) String?",
+  "group_assoc_wf.this_outcome_type": "(optional) String?",
+  "group_assoc_wf.this_outcome_name": "(optional) String?",
+  "group_assoc_wf.this_memory": "Int",
+  "group_assoc_wf.this_phenotype_file": "(optional) File?",
+  "group_assoc_wf.this_test": "(optional) String?",
+  "group_assoc_wf.this_disk": "Int",
+  "group_assoc_wf.these_gds_files": "Array[File]",
+  "group_assoc_wf.this_null_file": "(optional) File?",
+  "group_assoc_wf.this_covariates_string": "(optional) String?",
+  "group_assoc_wf.this_id_col": "(optional) String?",
+  "group_assoc_wf.this_kinship_matrix": "(optional) File?"
+}

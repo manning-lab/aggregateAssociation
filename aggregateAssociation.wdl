@@ -38,7 +38,7 @@ task fitNull {
 
 	output {
 		File model = "${label}_null.RDa"
-		File log = fitNull.log
+		File log = "fitNull.log"
 	}
 }
 
@@ -50,9 +50,6 @@ task aggAssocTest {
 	String? test
 	String? pval
 	String? weights
-	
-	
-	File script
 
 	Int memory
 	Int disk
@@ -86,7 +83,7 @@ task aggAssocTest {
 
 	output {
 		File assoc = "${label}.assoc.RData"
-		File log = aggAssocTest.log
+		File log = "aggAssocTest.log"
 	}
 }
 
@@ -117,7 +114,7 @@ task summary {
 	output {
 		File mhplot = "${label}_association_plots.png"
 		File assoc_res = "${label}.groupAssoc.csv"
-		File log = summary.log
+		File log = "summary.log"
 	}
 }
 
@@ -147,27 +144,25 @@ workflow group_assoc_wf {
 	# gds and group files must be in the same order, one group file per gds file
 	Array[Pair[File,File]] these_gds_groups = zip(these_gds_files, these_group_files)
 
-	call getScript
-
 	File null_genotype_file = these_gds_files[0]
 	Boolean have_null = defined(this_null_file)
 
 	if (!have_null) {
 
 		call fitNull {
-				input: genotype_file = null_genotype_file, phenotype_file = this_phenotype_file, outcome_name = this_outcome_name, outcome_type = this_outcome_type, covariates_string = this_covariates_string, sample_file = this_sample_file, label = this_label, kinship_matrix = this_kinship_matrix, id_col = this_id_col, script = getScript.null_script, memory = this_memory, disk = this_disk
+				input: genotype_file = null_genotype_file, phenotype_file = this_phenotype_file, outcome_name = this_outcome_name, outcome_type = this_outcome_type, covariates_string = this_covariates_string, sample_file = this_sample_file, label = this_label, kinship_matrix = this_kinship_matrix, id_col = this_id_col, memory = this_memory, disk = this_disk
 			}
 
 		scatter(this_gds_group in these_gds_groups) {
 			
 			call aggAssocTest {
-				input: gds_file = this_gds_group.left, null_file = fitNull.model, group_file = this_gds_group.right, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_memory, disk = this_disk, script = getScript.assoc_script
+				input: gds_file = this_gds_group.left, null_file = fitNull.model, group_file = this_gds_group.right, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_memory, disk = this_disk
 			}
 		}
 	
 
 		call summary {
-			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_memory, disk = this_disk, summaryScript = getScript.summary_script
+			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_memory, disk = this_disk
 		}
 	}
 
@@ -176,13 +171,13 @@ workflow group_assoc_wf {
 		scatter(this_gds_group in these_gds_groups) {
 			
 			call aggAssocTest as aggAssocTest_null_in {
-				input: gds_file = this_gds_group.left, null_file = this_null_file, group_file = this_gds_group.right, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_memory, disk = this_disk, script = getScript.assoc_script
+				input: gds_file = this_gds_group.left, null_file = this_null_file, group_file = this_gds_group.right, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_memory, disk = this_disk
 			}
 		}
 	
 
 		call summary as summary_null_in {
-			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_memory, disk = this_disk, summaryScript = getScript.summary_script
+			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_memory, disk = this_disk
 		}
 	}
 }
