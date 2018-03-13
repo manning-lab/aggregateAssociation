@@ -27,7 +27,7 @@ task fitNull {
 		echo "disk: ${disk}" >> fitNull.log
 		echo "" >> fitNull.log
 		dstat -c -d -m --nocolor 10 1>>fitNull.log &
-		R --vanilla --args ${genotype_file} ${phenotype_file} ${outcome_name} ${outcome_type} ${default="NA" covariates_string} "NA" "NA" ${sample_file} ${label} ${kinship_matrix} ${id_col} < /aggregateAssociation/genesis_nullmodel.R
+		R --vanilla --args ${genotype_file} ${phenotype_file} ${outcome_name} ${outcome_type} ${default="NA" covariates_string} "NA" "NA" "NA" ${sample_file} ${label} ${kinship_matrix} ${id_col} < /aggregateAssociation/genesis_nullmodel.R
 	}
 
 	runtime {

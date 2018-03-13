@@ -47,7 +47,7 @@ if (group_ext == 'RData'){
   # load if RData file
   load(group.file)  
 
-} else if (group_ext == 'tsv') {
+} else if (group_ext == 'tsv' | group_ext == 'csv') {
   # load with data table
   group.raw <- fread(group.file, data.table=F)
   var.df <- data.frame(id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"), ref = refChar(gds.data), alt = altChar(gds.data))
