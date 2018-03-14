@@ -50,14 +50,14 @@ if (group_ext == 'RData'){
 } else if (group_ext == 'tsv' | group_ext == 'csv') {
   # load with data table
   group.raw <- fread(group.file, data.table=F)
-  var.df <- data.frame(id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"), ref = refChar(gds.data), alt = altChar(gds.data))
+  var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"), ref = refChar(gds.data), alt = altChar(gds.data))
   var.df <- var.df[var.df$pos %in% group.raw$position,]
   group.raw <- group.raw[group.raw$position %in% var.df$pos,]
   group.var <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('pos','ref','alt'))
   groups <- list()
   
-  for (gid in unique(groups.var$group_id)){
-    groups[[gid]] <- groups.var[groups.var$group_id == gid,]
+  for (gid in unique(group.var$group_id)){
+    groups[[as.character(gid)]] <- group.var[group.var$group_id == gid,]
   }
   
 } else {
@@ -69,6 +69,12 @@ groups = groups[!duplicated(names(groups))]
 
 # make sure all groups are in the gds file
 groups.var_id <- do.call(rbind, groups)$variant.id
+if (is.null(gds.geno.data@variantData@data$variant.id)){
+  var.data <- data.frame(variant.id = seqGetData(gds.data, 'variant.id'))
+  var.anno <- AnnotatedDataFrame(var.data)
+  variantData(gds.geno.data) <- var.anno
+}
+
 if (any(!(groups.var_id %in% gds.geno.data@variantData@data$variant.id))){
   stop("One or more groups contain variants that are not in the genotype file")
 }
