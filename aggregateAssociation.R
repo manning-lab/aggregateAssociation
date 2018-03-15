@@ -13,7 +13,6 @@
 
 # Load packages
 library(GENESIS)
-# library(GWASTools)
 library(SeqArray)
 library(SeqVarTools)
 library(data.table)
@@ -29,6 +28,7 @@ test <- input_args[5]
 pval <- input_args[6]
 weights <- as.numeric(unlist(strsplit(input_args[7],",")))
 
+# these are from the DCC pipeline, credit -> S. Gogarten
 getAggList <- function(gds, variants.orig){
   filtOrig <- seqGetFilter(gds)
   seqSetFilter(gds, variant.id=variants.orig)
@@ -112,16 +112,16 @@ if (group_ext == 'RData'){
 groups = groups[!duplicated(names(groups))]
 
 # make sure all groups are in the gds file
-groups.var_id <- do.call(rbind, groups)$variant.id
-if (is.null(gds.geno.data@variantData@data$variant.id)){
-  var.data <- data.frame(variant.id = seqGetData(gds.data, 'variant.id'))
-  var.anno <- AnnotatedDataFrame(var.data)
-  variantData(gds.geno.data) <- var.anno
-}
-
-if (any(!(groups.var_id %in% gds.geno.data@variantData@data$variant.id))){
-  stop("One or more groups contain variants that are not in the genotype file")
-}
+# groups.var_id <- do.call(rbind, groups)$variant.id
+# if (is.null(gds.geno.data@variantData@data$variant.id)){
+#   var.data <- data.frame(variant.id = seqGetData(gds.data, 'variant.id'))
+#   var.anno <- AnnotatedDataFrame(var.data)
+#   variantData(gds.geno.data) <- var.anno
+# }
+# 
+# if (any(!(groups.var_id %in% gds.geno.data@variantData@data$variant.id))){
+#   stop("One or more groups contain variants that are not in the genotype file")
+# }
 
 #### run association test
 if(tolower(test)=="skat"){
