@@ -77,6 +77,7 @@ l <- list()
  }
 df$CHR <- as.numeric(as.vector(df$CHR))
 
+df <- df[!is.na(df$P),]
 manhattan(df,chr="CHR",bp="BP",p="P", main=label)
 dev.off()
 
