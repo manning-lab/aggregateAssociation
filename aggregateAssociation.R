@@ -13,10 +13,11 @@
 
 # Load packages
 library(GENESIS)
-library(GWASTools)
+# library(GWASTools)
 library(SeqArray)
 library(SeqVarTools)
 library(data.table)
+library(Biobase)
 
 # Parse input args
 input_args <- commandArgs(trailingOnly=T)
@@ -28,6 +29,30 @@ test <- input_args[5]
 pval <- input_args[6]
 weights <- as.numeric(unlist(strsplit(input_args[7],",")))
 
+getAggList <- function(gds, variants.orig){
+  filtOrig <- seqGetFilter(gds)
+  seqSetFilter(gds, variant.id=variants.orig)
+  variants.new <- .expandAlleles(gds)
+  group <- data.frame(variant.id=variants.new$variant.id, allele.index=variants.new$allele.index)
+}
+
+.variantDF <- function(gds) {
+  data.frame(variant.id=seqGetData(gds, "variant.id"),
+             chromosome=seqGetData(gds, "chromosome"),
+             position=seqGetData(gds, "position"),
+             ref=refChar(gds),
+             alt=altChar(gds),
+             nAlleles=seqNumAllele(gds),
+             stringsAsFactors=FALSE)
+}
+.expandAlleles <- function(gds) {
+  .variantDF(gds) %>%
+    separate_rows_("alt", sep=",") %>%
+    rename_(allele="alt") %>%
+    group_by_("variant.id") %>%
+    mutate_(allele.index=~1:n()) %>%
+    as.data.frame()
+}
 
 # Load nullfile
 load(null.file)
@@ -50,14 +75,33 @@ if (group_ext == 'RData'){
 } else if (group_ext == 'tsv' | group_ext == 'csv') {
   # load with data table
   group.raw <- fread(group.file, data.table=F)
-  var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"), ref = refChar(gds.data), alt = altChar(gds.data))
-  var.df <- var.df[var.df$pos %in% group.raw$position,]
-  group.raw <- group.raw[group.raw$position %in% var.df$pos,]
-  group.var <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('pos','ref','alt'))
+  var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
+  var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
+  seqSetFilter(gds.data,variant.id=var.df)
+  
+  library(SeqVarTools)
+  library(dplyr)
+  library(tidyr)
+  var.df <- .expandAlleles(gds.data)
+  var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
+  seqSetFilter(gds.data,variant.id=var.df$variant.id)
+  var.df$maf <- alleleFrequency(gds.data,n=1)
+  
+  
+  # var.df <- var.df[var.df$pos %in% group.raw$position,]
+  # group.raw <- group.raw[group.raw$position %in% var.df$pos,]
+  # group.var <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('pos','ref','alt'))
+  # 
+  # seqSetFilter(gds.data,variant.id = group.var$variant.id)
+  # library(SeqVarTools)
+  # library(dplyr)
+  # library(tidyr)
+  # gds.df <- .expandAlleles(gds.data)
+  # gds.df$maf <- alleleFrequency(gds.data,n=1)
   groups <- list()
   
-  for (gid in unique(group.var$group_id)){
-    groups[[as.character(gid)]] <- group.var[group.var$group_id == gid,]
+  for (gid in unique(var.df$group_id)){
+    groups[[as.character(gid)]] <- var.df[var.df$group_id == gid,]
   }
   
 } else {
