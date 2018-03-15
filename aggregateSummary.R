@@ -55,7 +55,7 @@ if (length(assoc.files) == 0){
 
 assoc.compilation <- assoc.compilation[!is.na(assoc.compilation$pval_0),]
 
-png(filename = paste(label,"_association_plots.png",sep=""),width = 11, height = 11, units = "in", res=800, type = "cairo")
+png(filename = paste(label,"_association_plots.png",sep=""),width = 11, height = 22, units = "in", res=800, type = "cairo")
 par(mfrow=c(2,1))
 
 # qq plot
