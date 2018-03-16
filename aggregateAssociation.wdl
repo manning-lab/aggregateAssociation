@@ -44,7 +44,7 @@ task fitNull {
 
 task aggAssocTest {
 	File gds_file
-	File null_file
+	File? null_file
 	File group_file
 	String label
 	String? test
