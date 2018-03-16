@@ -138,7 +138,9 @@ workflow group_assoc_wf {
 	String? this_weights
 	
 	# other inputs
-	Int this_memory
+	Int this_fitNull_memory
+	Int this_aggAssocTest_memory
+	Int this_summary_memory
 	Int this_disk
 	
 	File null_genotype_file = these_gds_files[0]
@@ -147,19 +149,19 @@ workflow group_assoc_wf {
 	if (!have_null) {
 
 		call fitNull {
-				input: genotype_file = null_genotype_file, phenotype_file = this_phenotype_file, outcome_name = this_outcome_name, outcome_type = this_outcome_type, covariates_string = this_covariates_string, sample_file = this_sample_file, label = this_label, kinship_matrix = this_kinship_matrix, id_col = this_id_col, memory = this_memory, disk = this_disk
+				input: genotype_file = null_genotype_file, phenotype_file = this_phenotype_file, outcome_name = this_outcome_name, outcome_type = this_outcome_type, covariates_string = this_covariates_string, sample_file = this_sample_file, label = this_label, kinship_matrix = this_kinship_matrix, id_col = this_id_col, memory = this_fitNull_memory, disk = this_disk
 			}
 
 		scatter(this_gds_file in these_gds_files) {
 			
 			call aggAssocTest {
-				input: gds_file = this_gds_file, null_file = fitNull.model, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_memory, disk = this_disk
+				input: gds_file = this_gds_file, null_file = fitNull.model, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_aggAssocTest_memory, disk = this_disk
 			}
 		}
 	
 
 		call summary {
-			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_memory, disk = this_disk
+			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_summary_memory, disk = this_disk
 		}
 	}
 
@@ -168,13 +170,13 @@ workflow group_assoc_wf {
 		scatter(this_gds_file in these_gds_files) {
 			
 			call aggAssocTest as aggAssocTest_null_in {
-				input: gds_file = this_gds_file, null_file = this_null_file, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_memory, disk = this_disk
+				input: gds_file = this_gds_file, null_file = this_null_file, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_aggAssocTest_memory, disk = this_disk
 			}
 		}
 	
 
 		call summary as summary_null_in {
-			input: assoc = aggAssocTest_null_in.assoc, label = this_label, memory = this_memory, disk = this_disk
+			input: assoc = aggAssocTest_null_in.assoc, label = this_label, memory = this_summary_memory, disk = this_disk
 		}
 	}
 }
