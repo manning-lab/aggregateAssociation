@@ -13,20 +13,20 @@ task fitNull {
 	Int disk
 
 	command {
-		echo "Input files" > fitNull.log
-		echo "genotype_file: ${genotype_file}" >> fitNull.log
-		echo "phenotype_file: ${phenotype_file}" >> fitNull.log
-		echo "outcome_name: ${outcome_name}" >> fitNull.log
-		echo "outcome_type: ${outcome_type}" >> fitNull.log
-		echo "covariates_string: ${covariates_string}" >> fitNull.log
-		echo "sample_file: ${sample_file}" >> fitNull.log
-		echo "label: ${label}" >> fitNull.log
-		echo "kinship_matrix: ${kinship_matrix}" >> fitNull.log
-		echo "id_col: ${id_col}" >> fitNull.log
-		echo "memory: ${memory}" >> fitNull.log
-		echo "disk: ${disk}" >> fitNull.log
-		echo "" >> fitNull.log
-		dstat -c -d -m --nocolor 10 1>>fitNull.log &
+		echo "Input files" > fitNull_out.log
+		echo "genotype_file: ${genotype_file}" >> fitNull_out.log
+		echo "phenotype_file: ${phenotype_file}" >> fitNull_out.log
+		echo "outcome_name: ${outcome_name}" >> fitNull_out.log
+		echo "outcome_type: ${outcome_type}" >> fitNull_out.log
+		echo "covariates_string: ${covariates_string}" >> fitNull_out.log
+		echo "sample_file: ${sample_file}" >> fitNull_out.log
+		echo "label: ${label}" >> fitNull_out.log
+		echo "kinship_matrix: ${kinship_matrix}" >> fitNull_out.log
+		echo "id_col: ${id_col}" >> fitNull_out.log
+		echo "memory: ${memory}" >> fitNull_out.log
+		echo "disk: ${disk}" >> fitNull_out.log
+		echo "" >> fitNull_out.log
+		dstat -c -d -m --nocolor 10 1>>fitNull_out.log &
 		R --vanilla --args ${genotype_file} ${phenotype_file} ${outcome_name} ${outcome_type} ${default="NA" covariates_string} "NA" "NA" "NA" ${sample_file} ${label} ${kinship_matrix} ${id_col} < /aggregateAssociation/genesis_nullmodel.R
 	}
 
@@ -38,7 +38,7 @@ task fitNull {
 
 	output {
 		File model = "${label}_null.RDa"
-		File log = "fitNull.log"
+		File log = "fitNull_out.log"
 	}
 }
 
@@ -55,18 +55,18 @@ task aggAssocTest {
 	Int disk
 
 	command {
-		echo "Input files" > aggAssocTest.log
-		echo "gds_file: ${gds_file}" >> aggAssocTest.log
-		echo "null_file: ${null_file}" >> aggAssocTest.log
-		echo "group_file: ${group_file}" >> aggAssocTest.log
-		echo "label: ${label}" >> aggAssocTest.log
-		echo "test: ${test}" >> aggAssocTest.log
-		echo "pval: ${pval}" >> aggAssocTest.log
-		echo "weights: ${weights}" >> aggAssocTest.log
-		echo "memory: ${memory}" >> aggAssocTest.log
-		echo "disk: ${disk}" >> aggAssocTest.log
-		echo "" >> aggAssocTest.log
-		dstat -c -d -m --nocolor 10 1>>aggAssocTest.log &
+		echo "Input files" > aggAssocTest_out.log
+		echo "gds_file: ${gds_file}" >> aggAssocTest_out.log
+		echo "null_file: ${null_file}" >> aggAssocTest_out.log
+		echo "group_file: ${group_file}" >> aggAssocTest_out.log
+		echo "label: ${label}" >> aggAssocTest_out.log
+		echo "test: ${test}" >> aggAssocTest_out.log
+		echo "pval: ${pval}" >> aggAssocTest_out.log
+		echo "weights: ${weights}" >> aggAssocTest_out.log
+		echo "memory: ${memory}" >> aggAssocTest_out.log
+		echo "disk: ${disk}" >> aggAssocTest_out.log
+		echo "" >> aggAssocTest_out.log
+		dstat -c -d -m --nocolor 10 1>>aggAssocTest_out.log &
 		R --vanilla --args ${gds_file} ${null_file} ${group_file} ${label} ${default="SKAT" test} ${default="kuonen" pval} ${default="1,25" weights} < /aggregateAssociation/aggregateAssociation.R
 	}
 
@@ -83,7 +83,7 @@ task aggAssocTest {
 
 	output {
 		File assoc = "${label}.assoc.RData"
-		File log = "aggAssocTest.log"
+		File log = "aggAssocTest_out.log"
 	}
 }
 
@@ -95,13 +95,13 @@ task summary {
 	Int disk
 
 	command {
-		echo "Input files" > summary.log
-		echo "label: ${label}" >> summary.log
-		echo "assoc: ${sep = ',' assoc}" >> summary.log
-		echo "memory: ${memory}" >> summary.log
-		echo "disk: ${disk}" >> summary.log
-		echo "" >> summary.log
-		dstat -c -d -m --nocolor 10 1>>summary.log &
+		echo "Input files" > summary_out.log
+		echo "label: ${label}" >> summary_out.log
+		echo "assoc: ${sep = ',' assoc}" >> summary_out.log
+		echo "memory: ${memory}" >> summary_out.log
+		echo "disk: ${disk}" >> summary_out.log
+		echo "" >> summary_out.log
+		dstat -c -d -m --nocolor 10 1>>summary_out.log &
 		R --vanilla --args ${label} ${sep = ',' assoc} < /aggregateAssociation/aggregateSummary.R
 	}
 	
@@ -114,7 +114,7 @@ task summary {
 	output {
 		File mhplot = "${label}_association_plots.png"
 		File assoc_res = "${label}.groupAssoc.csv"
-		File log = "summary.log"
+		File log = "summary_out.log"
 	}
 }
 
