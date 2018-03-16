@@ -174,7 +174,7 @@ workflow group_assoc_wf {
 	
 
 		call summary as summary_null_in {
-			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_memory, disk = this_disk
+			input: assoc = aggAssocTest_null_in.assoc, label = this_label, memory = this_memory, disk = this_disk
 		}
 	}
 }
