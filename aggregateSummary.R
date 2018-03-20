@@ -16,7 +16,7 @@ lapply(packages, library, character.only = TRUE)
 input_args <- commandArgs(trailingOnly=T)
 label <- input_args[1]
 assoc.files <- unlist(strsplit(input_args[2],","))
-all_assoc <- list()
+var.info <- list()
 
 if (length(assoc.files) == 0){
   fwrite(list(),paste(label, ".assoc.csv", sep=""),sep=",",row.names=F)
@@ -33,15 +33,39 @@ if (length(assoc.files) == 0){
   for (i in seq(1,length(assoc.files))) {
     load(assoc.files[i])
     
+    # get group results
     res <- assoc$results
-    all_assoc[[i]]<-assoc
+    
+    # get variant info for each group
+    var.list <- list()
+    for (g in names(assoc$variantInfo)){
+      df <- assoc$variantInfo[[g]]
+      if (NROW(df) == 0){
+        next
+      }
+      df$group <- g
+      df$pval <- res[rownames(res) == g,"pval_0"]
+      var.list[[g]] <- df
+    }
+    
+    var.df <- do.call(rbind,var.list)
+    var.info[[i]] <- var.df
 
     if (!is.na(res)[1]){
       print(dim(res))
       res <- res[!is.na(res[,"pval_0"]),]
       
-      #add to assoc.compilation
-      res <- rbind(res,rep(assoc$variantInfo[[1]]$chr,length(res[,1])))
+      # add chromosome and minimum position to results
+      chrs <- c()
+      pos <- c()
+      for (g in rownames(res)){
+        chrs <- c(chrs,var.df[var.df$group == g,]$chr[1])
+        pos <- c(pos,min(var.df[var.df$group == g,]$pos))
+      }
+      
+      res$chr <- chrs
+      res$pos <- pos
+      
       assoc.compilation <- rbind(assoc.compilation, res)
       
       if (i == 1) {
@@ -54,31 +78,14 @@ if (length(assoc.files) == 0){
 }
 
 assoc.compilation <- assoc.compilation[!is.na(assoc.compilation$pval_0),]
+assoc.compilation$chr <- ifelse(assoc.compilation$chr == "X", 23, as.numeric(assoc.compilation$chr))
 
 png(filename = paste(label,"_association_plots.png",sep=""),width = 11, height = 22, units = "in", res=800, type = "cairo")
 par(mfrow=c(2,1))
 
 # qq plot
 qq(as.numeric(assoc.compilation[,"pval_0"]),main=label)
-
-# mh plot
-l <- list()
- for (i in seq(1,length(all_assoc))){
-   l2 <- list()
-     for (j in seq(1,length(all_assoc[[i]]$variantInfo))){
-       l2[[length(l2)+1]] <- data.frame(P=rep(all_assoc[[i]]$results$pval_0[j],length(all_assoc[[i]]$variantInfo[[j]][,1])), BP=all_assoc[[i]]$variantInfo[[j]]$pos, CHR=all_assoc[[i]]$variantInfo[[j]]$chr)
-     }
-   l <- unlist(list(l,l2),recursive=F)
- }
-
- df <- l[[1]]
- for (i in seq(2,length(l))){
-   df <- rbind(df,l[[i]])
- }
-df$CHR <- as.numeric(as.vector(df$CHR))
-
-df <- df[!is.na(df$P),]
-manhattan(df,chr="CHR",bp="BP",p="P", main=label)
+manhattan(assoc.compilation,chr="chr",bp="pos",p="pval_0", main=label)
 dev.off()
 
 write.csv(assoc.compilation, paste(label, ".groupAssoc.csv", sep=""))
