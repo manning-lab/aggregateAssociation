@@ -73,35 +73,45 @@ if (group_ext == 'RData'){
   load(group.file)  
 
 } else if (group_ext == 'tsv' | group_ext == 'csv') {
-  # load with data table
   group.raw <- fread(group.file, data.table=F)
-  var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
-  var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
-  seqSetFilter(gds.data,variant.id=var.df)
   
-  library(SeqVarTools)
-  library(dplyr)
-  library(tidyr)
-  var.df <- .expandAlleles(gds.data)
-  var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
-  seqSetFilter(gds.data,variant.id=var.df$variant.id)
-  var.df$maf <- alleleFrequency(gds.data,n=1)
+  if(!("allele.index" %in% names(group.raw)) | !(variant.id %in% names(group.raw)) ){
+  # load with data table
   
-  
-  # var.df <- var.df[var.df$pos %in% group.raw$position,]
-  # group.raw <- group.raw[group.raw$position %in% var.df$pos,]
-  # group.var <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('pos','ref','alt'))
-  # 
-  # seqSetFilter(gds.data,variant.id = group.var$variant.id)
-  # library(SeqVarTools)
-  # library(dplyr)
-  # library(tidyr)
-  # gds.df <- .expandAlleles(gds.data)
-  # gds.df$maf <- alleleFrequency(gds.data,n=1)
-  groups <- list()
-  
-  for (gid in unique(var.df$group_id)){
-    groups[[as.character(gid)]] <- var.df[var.df$group_id == gid,]
+    var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
+    var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
+    seqSetFilter(gds.data,variant.id=var.df)
+    
+    library(SeqVarTools)
+    library(dplyr)
+    library(tidyr)
+    var.df <- .expandAlleles(gds.data)
+    var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
+    seqSetFilter(gds.data,variant.id=var.df$variant.id)
+    var.df$maf <- alleleFrequency(gds.data,n=1)
+    
+    
+    # var.df <- var.df[var.df$pos %in% group.raw$position,]
+    # group.raw <- group.raw[group.raw$position %in% var.df$pos,]
+    # group.var <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('pos','ref','alt'))
+    # 
+    # seqSetFilter(gds.data,variant.id = group.var$variant.id)
+    # library(SeqVarTools)
+    # library(dplyr)
+    # library(tidyr)
+    # gds.df <- .expandAlleles(gds.data)
+    # gds.df$maf <- alleleFrequency(gds.data,n=1)
+    groups <- list()
+    
+    for (gid in unique(var.df$group_id)){
+      groups[[as.character(gid)]] <- var.df[var.df$group_id == gid,]
+    }
+  } else {
+    groups <- list()
+    
+    for (gid in unique(group.raw$group_id)){
+      groups[[as.character(gid)]] <- group.raw[group.raw$group_id == gid,]
+    }
   }
   
 } else {
