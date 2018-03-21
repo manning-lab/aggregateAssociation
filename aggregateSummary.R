@@ -90,5 +90,5 @@ dev.off()
 
 write.csv(assoc.compilation, paste(label, ".groupAssoc.csv", sep=""))
 var.df = do.call(rbind,var.info)
-fwrite(var.df, file = paste(label, "all.variants.groupAssoc.csv", sep=""), row.names = F)
+fwrite(var.df, file = paste(label, ".all.variants.groupAssoc.csv", sep=""), row.names = F)
 
