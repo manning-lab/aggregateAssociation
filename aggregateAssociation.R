@@ -35,6 +35,7 @@ getAggList <- function(gds, variants.orig){
   seqSetFilter(gds, variant.id=variants.orig)
   variants.new <- .expandAlleles(gds)
   group <- data.frame(variant.id=variants.new$variant.id, allele.index=variants.new$allele.index)
+  seqSetFilter(gds.data, variant.sel = filtOrig$variant.sel, sample.sel = filtOrig$sample.sel)
 }
 .variantDF <- function(gds) {
   data.frame(variant.id=seqGetData(gds, "variant.id"),
@@ -91,6 +92,13 @@ if (group_ext == 'RData'){
   
   # merge over pos, ref, and alt
   var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
+  
+  # make sure col naems are right
+  names(var.df)[names(var.df) == "variant.id.x"] <- "variant.id"
+  names(var.df)[names(var.df) == "chromosome.x"] <- "chromosome"
+  names(var.df)[names(var.df) == "nAlleles.x"] <- "nAlleles"
+  names(var.df)[names(var.df) == "allele.index.x"] <- "allele.index"
+  
   
   # filter to those variants in both gds and groups
   seqSetFilter(gds.data,variant.id=var.df$variant.id)
