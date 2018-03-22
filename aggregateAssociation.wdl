@@ -50,6 +50,7 @@ task aggAssocTest {
 	String? test
 	String? pval
 	String? weights
+	String? force_maf
 
 	Int memory
 	Int disk
@@ -67,7 +68,7 @@ task aggAssocTest {
 		echo "disk: ${disk}" >> aggAssocTest_out.log
 		echo "" >> aggAssocTest_out.log
 		dstat -c -d -m --nocolor 10 1>>aggAssocTest_out.log &
-		R --vanilla --args ${gds_file} ${null_file} ${group_file} ${label} ${default="SKAT" test} ${default="kuonen" pval} ${default="1,25" weights} < /aggregateAssociation/aggregateAssociation.R
+		R --vanilla --args ${gds_file} ${null_file} ${group_file} ${label} ${default="SKAT" test} ${default="kuonen" pval} ${default="1,25" weights} ${default="True" force_maf} < /aggregateAssociation/aggregateAssociation.R
 	}
 
 	meta {
@@ -83,6 +84,7 @@ task aggAssocTest {
 
 	output {
 		File assoc = "${label}.assoc.RData"
+		File groups = "${label}.groups.RData"
 		File log = "aggAssocTest_out.log"
 	}
 }
@@ -137,6 +139,7 @@ workflow group_assoc_wf {
 	String? this_test
 	String? this_pval
 	String? this_weights
+	String? this_force_maf
 	
 	# other inputs
 	Int this_fitNull_memory
@@ -156,7 +159,7 @@ workflow group_assoc_wf {
 		scatter(this_gds_file in these_gds_files) {
 			
 			call aggAssocTest {
-				input: gds_file = this_gds_file, null_file = fitNull.model, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_aggAssocTest_memory, disk = this_disk
+				input: gds_file = this_gds_file, null_file = fitNull.model, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, force_maf = this_force_maf, memory = this_aggAssocTest_memory, disk = this_disk
 			}
 		}
 	
@@ -171,7 +174,7 @@ workflow group_assoc_wf {
 		scatter(this_gds_file in these_gds_files) {
 			
 			call aggAssocTest as aggAssocTest_null_in {
-				input: gds_file = this_gds_file, null_file = this_null_file, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, memory = this_aggAssocTest_memory, disk = this_disk
+				input: gds_file = this_gds_file, null_file = this_null_file, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, force_maf = this_force_maf, memory = this_aggAssocTest_memory, disk = this_disk
 			}
 		}
 	

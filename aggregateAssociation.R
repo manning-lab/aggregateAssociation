@@ -27,6 +27,7 @@ label <- input_args[4]
 test <- input_args[5]
 pval <- input_args[6]
 weights <- as.numeric(unlist(strsplit(input_args[7],",")))
+force.maf <- input_args[8]
 
 # these are from the DCC pipeline, credit -> S. Gogarten
 getAggList <- function(gds, variants.orig){
@@ -35,7 +36,6 @@ getAggList <- function(gds, variants.orig){
   variants.new <- .expandAlleles(gds)
   group <- data.frame(variant.id=variants.new$variant.id, allele.index=variants.new$allele.index)
 }
-
 .variantDF <- function(gds) {
   data.frame(variant.id=seqGetData(gds, "variant.id"),
              chromosome=seqGetData(gds, "chromosome"),
@@ -73,47 +73,51 @@ if (group_ext == 'RData'){
   load(group.file)  
 
 } else if (group_ext == 'tsv' | group_ext == 'csv') {
+  # load group file
   group.raw <- fread(group.file, data.table=F)
   
-  if(!("allele.index" %in% names(group.raw)) | !(variant.id %in% names(group.raw)) ){
-  # load with data table
+  # need to match with variant data; get variant.id and position
+  var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
   
-    var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
-    var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
-    seqSetFilter(gds.data,variant.id=var.df)
-    
-    library(SeqVarTools)
-    library(dplyr)
-    library(tidyr)
-    var.df <- .expandAlleles(gds.data)
-    var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
-    seqSetFilter(gds.data,variant.id=var.df$variant.id)
-    var.df$maf <- alleleFrequency(gds.data,n=1)
-    
-    
-    # var.df <- var.df[var.df$pos %in% group.raw$position,]
-    # group.raw <- group.raw[group.raw$position %in% var.df$pos,]
-    # group.var <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('pos','ref','alt'))
-    # 
-    # seqSetFilter(gds.data,variant.id = group.var$variant.id)
-    # library(SeqVarTools)
-    # library(dplyr)
-    # library(tidyr)
-    # gds.df <- .expandAlleles(gds.data)
-    # gds.df$maf <- alleleFrequency(gds.data,n=1)
-    groups <- list()
-    
-    for (gid in unique(var.df$group_id)){
-      groups[[as.character(gid)]] <- var.df[var.df$group_id == gid,]
-    }
+  # subset by positions in group file
+  var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
+  seqSetFilter(gds.data,variant.id=var.df)
+  
+  # get variant info in correct format
+  library(SeqVarTools)
+  library(dplyr)
+  library(tidyr)
+  var.df <- .expandAlleles(gds.data)
+  
+  # merge over pos, ref, and alt
+  var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
+  
+  # filter to those variants in both gds and groups
+  seqSetFilter(gds.data,variant.id=var.df$variant.id)
+  
+  # add the maf to the groups
+  ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
+  
+  # force alt to be lower maf allele
+  if (force.maf == "False" | force.maf == "F"){
+    var.df$maf <- ref.freq
   } else {
-    groups <- list()
+    # get the right alt index
+    alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), alt.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
     
-    for (gid in unique(group.raw$group_id)){
-      groups[[as.character(gid)]] <- group.raw[group.raw$group_id == gid,]
-    }
+    # merge with group file
+    var.df <- merge(var.df,alt.id, by.x = "variant.id", by.y = "variant.id")
+    
+    # rename cols
+    var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
+    names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
   }
   
+  groups <- list()
+  
+  for (gid in unique(var.df$group_id)){
+    groups[[as.character(gid)]] <- var.df[var.df$group_id == gid,]
+  }
 } else {
   stop("Group file does not have the required extension")
 }
@@ -121,17 +125,8 @@ if (group_ext == 'RData'){
 # make sure we have no duplicates
 groups = groups[!duplicated(names(groups))]
 
-# make sure all groups are in the gds file
-# groups.var_id <- do.call(rbind, groups)$variant.id
-# if (is.null(gds.geno.data@variantData@data$variant.id)){
-#   var.data <- data.frame(variant.id = seqGetData(gds.data, 'variant.id'))
-#   var.anno <- AnnotatedDataFrame(var.data)
-#   variantData(gds.geno.data) <- var.anno
-# }
-# 
-# if (any(!(groups.var_id %in% gds.geno.data@variantData@data$variant.id))){
-#   stop("One or more groups contain variants that are not in the genotype file")
-# }
+# groups to data frame
+groups.df <- do.call(rbind,groups)
 
 #### run association test
 if(tolower(test)=="skat"){
@@ -140,7 +135,14 @@ if(tolower(test)=="skat"){
   for (group_name in names(assoc$variantInfo)){
     assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
   }
+  
+  # add ref/alt to assoc variants
+  for (g in names(assoc$variantInfo)){
+    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "alt", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+  }
+  
   save(assoc, file=paste(label, ".assoc.RData", sep=""))
+  save(groups, file=paste(label, "groups.RData", sep=""))
 } else if (tolower(test) == "burden") {
   assoc <- assocTestSeq(gds.geno.data, nullmod, groups, test="Burden", burden.test=pval, weight.beta = weights)
   assoc$results = assoc$results[order(assoc$results[,paste(pval,".pval",sep="")]),]
@@ -148,10 +150,18 @@ if(tolower(test)=="skat"){
     assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
   }
   names(assoc$results)[names(assoc$results) == paste(pval,".pval",sep="")] = "pval_0"
+  
+  # add ref/alt to assoc variants
+  for (g in names(assoc$variantInfo)){
+    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "alt", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+  }
+  
   save(assoc, file=paste(label, ".assoc.RData", sep=""))
+  save(groups, file=paste(label, "groups.RData", sep=""))
   
 } else {
   fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
+  save(groups, file=paste(label, "groups.RData", sep=""))
 }
 
 seqClose(gds.data)
