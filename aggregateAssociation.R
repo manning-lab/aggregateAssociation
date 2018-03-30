@@ -91,7 +91,7 @@ if (group_ext == 'RData'){
   var.df <- .expandAlleles(gds.data)
   
   # merge over pos, ref, and alt
-  var.df <- merge(group.raw, var.df, by.x=c('position','ref','alt'), by.y=c('position','ref','allele'))
+  var.df <- merge(group.raw, var.df, by.x=c('position','ref','allele'), by.y=c('position','ref','allele'))
   
   # make sure col naems are right
   names(var.df)[names(var.df) == "variant.id.x"] <- "variant.id"
