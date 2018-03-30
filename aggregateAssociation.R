@@ -146,7 +146,7 @@ if(tolower(test)=="skat"){
   
   # add ref/alt to assoc variants
   for (g in names(assoc$variantInfo)){
-    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "alt", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
   }
   
   save(assoc, file=paste(label, ".assoc.RData", sep=""))
@@ -161,7 +161,7 @@ if(tolower(test)=="skat"){
   
   # add ref/alt to assoc variants
   for (g in names(assoc$variantInfo)){
-    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "alt", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
   }
   
   save(assoc, file=paste(label, ".assoc.RData", sep=""))
