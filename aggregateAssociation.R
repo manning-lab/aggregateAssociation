@@ -165,11 +165,11 @@ if(tolower(test)=="skat"){
   }
   
   save(assoc, file=paste(label, ".assoc.RData", sep=""))
-  save(groups, file=paste(label, "groups.RData", sep=""))
+  save(groups, file=paste(label, ".groups.RData", sep=""))
   
 } else {
   fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
-  save(groups, file=paste(label, "groups.RData", sep=""))
+  save(groups, file=paste(label, ".groups.RData", sep=""))
 }
 
 seqClose(gds.data)
