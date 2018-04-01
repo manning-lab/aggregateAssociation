@@ -150,7 +150,7 @@ if(tolower(test)=="skat"){
   }
   
   save(assoc, file=paste(label, ".assoc.RData", sep=""))
-  save(groups, file=paste(label, "groups.RData", sep=""))
+  save(groups, file=paste(label, ".groups.RData", sep=""))
 } else if (tolower(test) == "burden") {
   assoc <- assocTestSeq(gds.geno.data, nullmod, groups, test="Burden", burden.test=pval, weight.beta = weights)
   assoc$results = assoc$results[order(assoc$results[,paste(pval,".pval",sep="")]),]
