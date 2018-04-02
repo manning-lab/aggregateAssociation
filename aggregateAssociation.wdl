@@ -114,7 +114,7 @@ task summary {
 	}
 
 	output {
-		File mhplot = "${label}_association_plots.png"
+		File plots = "${label}_association_plots.png"
 		File assoc_res = "${label}.groupAssoc.csv"
 		File assoc_res_variants = "${label}.all.variants.groupAssoc.csv"
 		File log = "summary_out.log"
