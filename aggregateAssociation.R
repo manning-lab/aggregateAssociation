@@ -119,6 +119,7 @@ if (group_ext == 'RData'){
     # rename cols
     var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
     names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
+    names(var.df)[names(var.df)== "maf.x"] <- "maf"
   }
   
   groups <- list()
