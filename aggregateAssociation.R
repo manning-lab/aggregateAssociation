@@ -71,57 +71,61 @@ gds.geno.data <- SeqVarData(gds.data)
 group_ext <- tail(unlist(strsplit(basename(group.file),'\\.')),n=1)
 if (group_ext == 'RData'){
   # load if RData file
-  load(group.file)  
+  load(group.file)
 
 } else if (group_ext == 'tsv' | group_ext == 'csv') {
   # load group file
   group.raw <- fread(group.file, data.table=F)
   
-  # need to match with variant data; get variant.id and position
-  var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
-  
-  # subset by positions in group file
-  var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
-  seqSetFilter(gds.data,variant.id=var.df)
-  
-  # get variant info in correct format
-  library(SeqVarTools)
-  library(dplyr)
-  library(tidyr)
-  var.df <- .expandAlleles(gds.data)
-  
-  # merge over pos, ref, and alt
-  var.df <- merge(group.raw, var.df, by.x=c('position','ref','allele'), by.y=c('position','ref','allele'))
-  
-  # make sure col naems are right
-  names(var.df)[names(var.df) == "variant.id.x"] <- "variant.id"
-  names(var.df)[names(var.df) == "chromosome.x"] <- "chromosome"
-  names(var.df)[names(var.df) == "nAlleles.x"] <- "nAlleles"
-  names(var.df)[names(var.df) == "allele.index.x"] <- "allele.index"
-  
-  
-  # filter to those variants in both gds and groups
-  seqSetFilter(gds.data,variant.id=var.df$variant.id)
-  
-  # add the maf to the groups
-  ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
-  
-  # force alt to be lower maf allele
-  if (force.maf == "False" | force.maf == "F"){
-    var.df$maf <- ref.freq
-  } else {
-    # get the right alt index
-    alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), alt.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
-    
-    # merge with group file
-    var.df <- merge(var.df,alt.id, by.x = "variant.id", by.y = "variant.id")
-    
-    # rename cols
-    var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
-    names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
-    names(var.df)[names(var.df)== "maf.x"] <- "maf"
+  # check if group ids in file
+  if (!("group.id" %in% names(group.raw))){
+    stop("Group file must have column for group ids named group.id")
   }
   
+  # check if group file already has required columns
+  #  variant.id matching the variant.id in seqData for the variants that should be aggregated, and allele.index
+  if (!all(c("group.id","variant.id", "allele.index") %in% names(group.raw))){
+    # assume group file has at least group.id, chr, pos, ref, alt
+    # need to match with variant data; get variant.id and position
+    var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
+    
+    # subset by positions in group file
+    var.df <- var.df[var.df$pos %in% group.raw$position,"variant.id"]
+    seqSetFilter(gds.data,variant.id=var.df)
+    
+    # get variant info in correct format
+    library(SeqVarTools)
+    library(dplyr)
+    library(tidyr)
+    var.df <- .expandAlleles(gds.data)
+    
+    # merge over pos, ref, and alt
+    var.df <- merge(var.df, group.raw, by.x=c('chromosome','position','ref','allele'), by.y=c('chromosome','position','ref','alt'))
+    
+    # filter to those variants in both gds and groups
+    seqSetFilter(gds.data,variant.id=var.df$variant.id)
+    
+    # add the maf to the groups
+    ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
+    
+    # force alt to be lower maf allele
+    if (startsWith(tolower(force.maf), "f")){
+      var.df$maf <- ref.freq
+    } else {
+      # get the right alt index
+      alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), alt.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
+      
+      # merge with group file
+      var.df <- merge(var.df,alt.id, by.x = "variant.id", by.y = "variant.id")
+      
+      # rename cols
+      var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
+      names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
+      names(var.df)[names(var.df)== "maf.x"] <- "maf"
+    }
+  }
+  
+  # make the group list for genesis input
   groups <- list()
   
   for (gid in unique(var.df$group_id)){
