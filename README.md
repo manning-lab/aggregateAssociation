@@ -55,7 +55,7 @@ This function performs an association test to generate p-values for each aggrega
 Inputs:
 * gds_file : a genotype file containing data for all samples and all variants to be tested (GDS file)
 * null_file : output of the function *fitNull* or a pregenerated null model (.RDa)
-* group_file : RData or csv/tsv file with groups to include in analysis, if RData, must be saved as a list with unique names, each entry as a data frame with at least columns for variant.id, position, chromosome, ref, allele, nAlleles, allele.index. If csv, must have at least columns for group_id, position, chromosome, ref, allele (csv or RData)
+* group_file : RData or csv/tsv file with groups to include in analysis, if RData, must be saved as a list with unique names, each entry as a data frame with at least columns for variant.id, position, chromosome, ref, allele, nAlleles, allele.index. If csv, must have at least columns for group_id, position, chromosome, ref, alt (csv or RData)
 * label : prefix for output filename (string)
 * test : SKAT or Burden (string)
 * pval : if SKAT: davies, kuonen, or liu; if Burden: Score, Wald, or Firth (string)

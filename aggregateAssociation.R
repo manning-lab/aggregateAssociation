@@ -128,8 +128,8 @@ if (group_ext == 'RData'){
   # make the group list for genesis input
   groups <- list()
   
-  for (gid in unique(var.df$group_id)){
-    groups[[as.character(gid)]] <- var.df[var.df$group_id == gid,]
+  for (gid in unique(var.df$group.id)){
+    groups[[as.character(gid)]] <- var.df[var.df$group.id == gid,]
   }
 } else {
   stop("Group file does not have the required extension")
