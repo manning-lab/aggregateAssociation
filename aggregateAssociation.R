@@ -77,6 +77,7 @@ if (group_ext == 'RData'){
   # load group file
   group.raw <- fread(group.file, data.table=F)
   
+  names(group.raw)[names(group.raw)=="group_id"] <- "group.id"
   # check if group ids in file
   if (!("group.id" %in% names(group.raw))){
     stop("Group file must have column for group ids named group.id")
