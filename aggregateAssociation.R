@@ -100,6 +100,22 @@ if (group_ext == 'RData'){
     library(tidyr)
     var.df <- .expandAlleles(gds.data)
     
+    # make sure chromosome in same format
+    gds.chr <- seqGetData(gds.data,"chromosome")[1]
+    group.chr <- unique(group.raw$chromosome)[1]
+    
+    if (startsWith(gds.chr, "chr")){
+      if(!(startsWith(group.chr,"chr"))){
+        group.raw$chromosome <- sub("^","chr",group.raw$chromosome)
+      }
+    }
+    
+    if(!(startsWith(gds.chr,"chr"))){
+      if (startsWith(group.chr, "chr")){
+        group.raw$chromosome <- sub("chr","", group.raw$chromosome)
+      }
+    }
+    
     # merge over pos, ref, and alt
     var.df <- merge(var.df, group.raw, by.x=c('chromosome','position','ref','allele'), by.y=c('chromosome','position','ref','alt'))
     
