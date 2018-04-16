@@ -122,6 +122,13 @@ if (group_ext == 'RData'){
     # filter to those variants in both gds and groups
     seqSetFilter(gds.data,variant.id=var.df$variant.id)
     
+    # stop if we have no variants
+    if(length(seqGetData(gds.data, "variant.id")) == 0){
+      fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
+      save(groups, file=paste(label, ".groups.RData", sep=""))
+      stop("No variants were found in genotype file for the input aggregation units, returning empty.")
+    }
+    
     # add the maf to the groups
     ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
     
