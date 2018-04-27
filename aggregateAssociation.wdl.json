@@ -1,5 +1,5 @@
 {
-  "group_assoc_wf.this_group_file": "test_inputs/ALL.autosomes.pindel.20130502.complexindex.low_coverage.genotypes.groups.RData",
+  "group_assoc_wf.this_group_file": "test_inputs/ALL.autosomes.pindel.20130502.complexindex.low_coverage.genotypes.groups.csv",
   "group_assoc_wf.this_label": "demo_1000_genomes",
   "group_assoc_wf.this_sample_file": "test_inputs/integrated_call_samples_v3.20130502.ALL.panel.simulated.sample_ids.txt",
   "group_assoc_wf.this_pval": "kuonen",
