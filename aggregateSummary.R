@@ -80,11 +80,19 @@ if (length(assoc.files) == 0){
 assoc.compilation <- assoc.compilation[!is.na(assoc.compilation$pval_0),]
 assoc.compilation$chr <- ifelse(assoc.compilation$chr == "X", 23, as.numeric(assoc.compilation$chr))
 
+# Calculate genomic control
+lam = function(x,p=.5){
+  x = x[!is.na(x)]
+  chisq <- qchisq(1-x,1)
+  round((quantile(chisq,p)/qchisq(p,1)),2)
+}
+
 png(filename = paste(label,"_association_plots.png",sep=""),width = 11, height = 22, units = "in", res=800, type = "cairo")
 par(mfrow=c(2,1))
 
 # qq plot
 qq(as.numeric(assoc.compilation[,"pval_0"]),main=label)
+legend('topleft',c(paste0("GC = ", lam(assoc.compilation[,"pval_0"]),'/',lam(assoc.compilation[,"pval_0"],.9))))
 manhattan(assoc.compilation,chr="chr",bp="pos",p="pval_0", main=label)
 dev.off()
 
