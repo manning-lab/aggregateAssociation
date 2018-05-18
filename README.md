@@ -2,7 +2,7 @@
 
 ## Description 
 
-This workflow performs an aggregate association analysis of genotype data with a single phenotype. The primary code is written in R using the GENESIS package for model fitting and association testing. The workflow can either generate a null model from phenotype and relatedness data or use a pregenerated null model.
+This workflow performs an aggregate association analysis of genotype data with a single phenotype. The primary code is written in R using the GENESIS package for model fitting and association testing. The workflow can either generate a null model from phenotype and relatedness data or use a pregenerated null model. This workflow outputs both the full association statistics (pvalues, test statistics) and summary plots (manhatten and QQ)
 
 ### Authors
 
@@ -15,10 +15,14 @@ This workflow is produced and maintained by the [Manning Lab](https://manning-la
 
 ### Workflow execution
 
+This workflow is written with a WDL wrapper for portability. Each task can be run individually from the base script or within the full workflow.
+
 * [WDL](https://software.broadinstitute.org/wdl/documentation/quickstart)
 * [Chromwell](http://cromwell.readthedocs.io/en/develop/)
 
 ### R packages
+
+All required R packages are available in the associated docker image (manninglab/aggregateassociation).
 
 * [GENESIS](https://www.bioconductor.org/packages/release/bioc/html/GENESIS.html)
 * [GWASTools](https://www.bioconductor.org/packages/release/bioc/html/GWASTools.html)
@@ -31,7 +35,7 @@ This workflow is produced and maintained by the [Manning Lab](https://manning-la
 
 ### fitNull
 
-This function generates a null model to be used in association testing in Genesis
+This function generates a null model to be used in association testing in Genesis.
 
 Inputs:
 * genotype_file : genotype data for all samples, this is only used to ensure the correct ordering of phenotype data, it need not contain all genotypes to be tested in aggAssocTest (GDS file)
@@ -53,7 +57,7 @@ Outputs:
 This function performs an association test to generate p-values for each aggregation unit included.
 
 Inputs:
-* gds_file : a genotype file containing data for all samples and all variants to be tested (GDS file)
+* genotype_file : a genotype file containing data for all samples and all variants to be tested (GDS file)
 * null_file : output of the function *fitNull* or a pregenerated null model (.RDa)
 * group_file : RData or csv/tsv file with groups to include in analysis, if RData, must be saved as a list with unique names, each entry as a data frame with at least columns for variant.id, position, chromosome, ref, allele, nAlleles, allele.index. If csv, must have at least columns for group_id, position, chromosome, ref, alt (csv or RData)
 * label : prefix for output filename (string)
@@ -65,6 +69,7 @@ Inputs:
 Outputs:
 * assoc : an RData file of associations results (.RData)
 * log : log file containing paths to inputs and memory and cpu usage
+* groups : csv file of actualy groups used for analysis. Some reasonable defaults are set during execution: unless force_maf == F, the alternate allele may be changed so that MAF(alt) < MAF(ref). Some variants may also be removed from groups if they do not occuring within the sample being tested. This will be reflected in the groups output.
 
 ### summary
 

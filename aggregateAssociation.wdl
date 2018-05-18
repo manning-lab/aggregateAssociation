@@ -43,7 +43,7 @@ task fitNull {
 }
 
 task aggAssocTest {
-	File gds_file
+	File genotype_file
 	File? null_file
 	File group_file
 	String label
@@ -57,7 +57,7 @@ task aggAssocTest {
 
 	command {
 		echo "Input files" > aggAssocTest_out.log
-		echo "gds_file: ${gds_file}" >> aggAssocTest_out.log
+		echo "genotype_file: ${genotype_file}" >> aggAssocTest_out.log
 		echo "null_file: ${null_file}" >> aggAssocTest_out.log
 		echo "group_file: ${group_file}" >> aggAssocTest_out.log
 		echo "label: ${label}" >> aggAssocTest_out.log
@@ -66,9 +66,10 @@ task aggAssocTest {
 		echo "weights: ${weights}" >> aggAssocTest_out.log
 		echo "memory: ${memory}" >> aggAssocTest_out.log
 		echo "disk: ${disk}" >> aggAssocTest_out.log
+		echo "force_maf: ${force_maf}" >> aggAssocTest_out.log
 		echo "" >> aggAssocTest_out.log
 		dstat -c -d -m --nocolor 10 1>>aggAssocTest_out.log &
-		R --vanilla --args ${gds_file} ${null_file} ${group_file} ${label} ${default="SKAT" test} ${default="kuonen" pval} ${default="1,25" weights} ${default="True" force_maf} < /aggregateAssociation/aggregateAssociation.R
+		R --vanilla --args ${genotype_file} ${null_file} ${group_file} ${label} ${default="SKAT" test} ${default="kuonen" pval} ${default="1,25" weights} ${default="True" force_maf} < /aggregateAssociation/aggregateAssociation.R
 	}
 
 	meta {
@@ -133,7 +134,7 @@ workflow group_assoc_wf {
 	String? this_id_col
 
 	# aggAssocTest inputs
-	Array[File] these_gds_files
+	Array[File] these_genotype_files
 	File? this_null_file
 	File this_group_file
 	String? this_test
@@ -147,7 +148,7 @@ workflow group_assoc_wf {
 	Int this_summary_memory
 	Int this_disk
 	
-	File null_genotype_file = these_gds_files[0]
+	File null_genotype_file = these_genotype_files[0]
 	Boolean have_null = defined(this_null_file)
 
 	if (!have_null) {
@@ -156,10 +157,10 @@ workflow group_assoc_wf {
 				input: genotype_file = null_genotype_file, phenotype_file = this_phenotype_file, outcome_name = this_outcome_name, outcome_type = this_outcome_type, covariates_string = this_covariates_string, sample_file = this_sample_file, label = this_label, kinship_matrix = this_kinship_matrix, id_col = this_id_col, memory = this_fitNull_memory, disk = this_disk
 			}
 
-		scatter(this_gds_file in these_gds_files) {
+		scatter(this_genotype_file in these_genotype_files) {
 			
 			call aggAssocTest {
-				input: gds_file = this_gds_file, null_file = fitNull.model, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, force_maf = this_force_maf, memory = this_aggAssocTest_memory, disk = this_disk
+				input: genotype_file = this_genotype_file, null_file = fitNull.model, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, force_maf = this_force_maf, memory = this_aggAssocTest_memory, disk = this_disk
 			}
 		}
 	
@@ -171,10 +172,10 @@ workflow group_assoc_wf {
 
 	if (have_null) {
 
-		scatter(this_gds_file in these_gds_files) {
+		scatter(this_genotype_file in these_genotype_files) {
 			
 			call aggAssocTest as aggAssocTest_null_in {
-				input: gds_file = this_gds_file, null_file = this_null_file, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, force_maf = this_force_maf, memory = this_aggAssocTest_memory, disk = this_disk
+				input: genotype_file = this_genotype_file, null_file = this_null_file, group_file = this_group_file, label = this_label, test = this_test, pval = this_pval, weights = this_weights, force_maf = this_force_maf, memory = this_aggAssocTest_memory, disk = this_disk
 			}
 		}
 	
