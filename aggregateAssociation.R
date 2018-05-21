@@ -124,8 +124,10 @@ if (group_ext == 'RData'){
     
     # stop if we have no variants
     if(length(seqGetData(gds.data, "variant.id")) == 0){
-      fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
-      save(groups, file=paste(label, ".groups.RData", sep=""))
+      system(paste("touch ",label, ".assoc.RData", sep=""))
+    # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
+      system(paste("touch ",label, ".groups.RData", sep=""))
+    # save(groups, file=paste(label, ".groups.RData", sep=""))
       stop("No variants were found in genotype file for the input aggregation units, returning empty.")
     }
     
@@ -197,8 +199,10 @@ if(tolower(test)=="skat"){
   save(groups, file=paste(label, ".groups.RData", sep=""))
   
 } else {
-  fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
-  save(groups, file=paste(label, ".groups.RData", sep=""))
+  system(paste("touch ",label, ".assoc.RData", sep=""))
+  # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
+  system(paste("touch ",label, ".groups.RData", sep=""))
+  # save(groups, file=paste(label, ".groups.RData", sep=""))
 }
 
 seqClose(gds.data)
