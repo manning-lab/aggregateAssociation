@@ -67,12 +67,15 @@ seqSetFilter(gds.data,sample.id=nullmod$scanID, action="intersect", verbose=TRUE
 # Genotype data to the correct format
 gds.geno.data <- SeqVarData(gds.data)
 
+# set flag
+has.var <- T
+
 ## load groups
 group_ext <- tail(unlist(strsplit(basename(group.file),'\\.')),n=1)
 if (group_ext == 'RData'){
   # load if RData file
   load(group.file)
-
+  
 } else if (group_ext == 'tsv' | group_ext == 'csv') {
   # load group file
   group.raw <- fread(group.file, data.table=F)
@@ -154,6 +157,8 @@ if (group_ext == 'RData'){
         names(var.df)[names(var.df)== "maf.x"] <- "maf"
       }
     }
+  } else {
+    var.df <- group.raw
   }
   
   if (has.var){
