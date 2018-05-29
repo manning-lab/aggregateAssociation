@@ -121,6 +121,9 @@ if (group_ext == 'RData'){
     
     # filter to those variants in both gds and groups
     seqSetFilter(gds.data,variant.id=var.df$variant.id)
+
+    # set has variants flag
+    has.var <- T
     
     # stop if we have no variants
     if(length(seqGetData(gds.data, "variant.id")) == 0){
@@ -128,81 +131,89 @@ if (group_ext == 'RData'){
     # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
       system(paste("touch ",label, ".groups.RData", sep=""))
     # save(groups, file=paste(label, ".groups.RData", sep=""))
-      stop("No variants were found in genotype file for the input aggregation units, returning empty.")
-    }
-    
-    # add the maf to the groups
-    ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
-    
-    # force alt to be lower maf allele
-    if (startsWith(tolower(force.maf), "f")){
-      var.df$maf <- ref.freq
+      print("No variants were found in genotype file for the input aggregation units, returning empty.")
+      has.var <- F
     } else {
-      # get the right alt index
-      alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), alt.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
+    
+      # add the maf to the groups
+      ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
       
-      # merge with group file
-      var.df <- merge(var.df,alt.id, by.x = "variant.id", by.y = "variant.id")
-      
-      # rename cols
-      var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
-      names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
-      names(var.df)[names(var.df)== "maf.x"] <- "maf"
+      # force alt to be lower maf allele
+      if (startsWith(tolower(force.maf), "f")){
+        var.df$maf <- ref.freq
+      } else {
+        # get the right alt index
+        alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), alt.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
+        
+        # merge with group file
+        var.df <- merge(var.df,alt.id, by.x = "variant.id", by.y = "variant.id")
+        
+        # rename cols
+        var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
+        names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
+        names(var.df)[names(var.df)== "maf.x"] <- "maf"
+      }
     }
   }
   
-  # make the group list for genesis input
-  groups <- list()
-  
-  for (gid in unique(var.df$group.id)){
-    groups[[as.character(gid)]] <- var.df[var.df$group.id == gid,]
+  if (has.var){
+
+    # make the group list for genesis input
+    groups <- list()
+    
+    for (gid in unique(var.df$group.id)){
+      groups[[as.character(gid)]] <- var.df[var.df$group.id == gid,]
+    }
   }
 } else {
   stop("Group file does not have the required extension")
 }
 
-# make sure we have no duplicates
-groups = groups[!duplicated(names(groups))]
+if (has.var) {
 
-# groups to data frame
-groups.df <- do.call(rbind,groups)
+  # make sure we have no duplicates
+  groups = groups[!duplicated(names(groups))]
 
-#### run association test
-if(tolower(test)=="skat"){
-  assoc <- assocTestSeq(gds.geno.data, nullmod, groups, test="SKAT", pval.method=pval, weight.beta = weights)
-  assoc$results = assoc$results[order(assoc$results$pval_0),]
-  for (group_name in names(assoc$variantInfo)){
-    assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
+  # groups to data frame
+  groups.df <- do.call(rbind,groups)
+
+  #### run association test
+  if(tolower(test)=="skat"){
+    assoc <- assocTestSeq(gds.geno.data, nullmod, groups, test="SKAT", pval.method=pval, weight.beta = weights)
+    assoc$results = assoc$results[order(assoc$results$pval_0),]
+    for (group_name in names(assoc$variantInfo)){
+      assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
+    }
+    
+    # add ref/alt to assoc variants
+    for (g in names(assoc$variantInfo)){
+      assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+    }
+    
+    save(assoc, file=paste(label, ".assoc.RData", sep=""))
+    save(groups, file=paste(label, ".groups.RData", sep=""))
+  } else if (tolower(test) == "burden") {
+    assoc <- assocTestSeq(gds.geno.data, nullmod, groups, test="Burden", burden.test=pval, weight.beta = weights)
+    assoc$results = assoc$results[order(assoc$results[,paste(pval,".pval",sep="")]),]
+    for (group_name in names(assoc$variantInfo)){
+      assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
+    }
+    names(assoc$results)[names(assoc$results) == paste(pval,".pval",sep="")] = "pval_0"
+    
+    # add ref/alt to assoc variants
+    for (g in names(assoc$variantInfo)){
+      assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+    }
+    
+    save(assoc, file=paste(label, ".assoc.RData", sep=""))
+    save(groups, file=paste(label, ".groups.RData", sep=""))
+    
+  } else {
+    system(paste("touch ",label, ".assoc.RData", sep=""))
+    # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
+    system(paste("touch ",label, ".groups.RData", sep=""))
+    # save(groups, file=paste(label, ".groups.RData", sep=""))
   }
-  
-  # add ref/alt to assoc variants
-  for (g in names(assoc$variantInfo)){
-    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
-  }
-  
-  save(assoc, file=paste(label, ".assoc.RData", sep=""))
-  save(groups, file=paste(label, ".groups.RData", sep=""))
-} else if (tolower(test) == "burden") {
-  assoc <- assocTestSeq(gds.geno.data, nullmod, groups, test="Burden", burden.test=pval, weight.beta = weights)
-  assoc$results = assoc$results[order(assoc$results[,paste(pval,".pval",sep="")]),]
-  for (group_name in names(assoc$variantInfo)){
-    assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
-  }
-  names(assoc$results)[names(assoc$results) == paste(pval,".pval",sep="")] = "pval_0"
-  
-  # add ref/alt to assoc variants
-  for (g in names(assoc$variantInfo)){
-    assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
-  }
-  
-  save(assoc, file=paste(label, ".assoc.RData", sep=""))
-  save(groups, file=paste(label, ".groups.RData", sep=""))
-  
-} else {
-  system(paste("touch ",label, ".assoc.RData", sep=""))
-  # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
-  system(paste("touch ",label, ".groups.RData", sep=""))
-  # save(groups, file=paste(label, ".groups.RData", sep=""))
 }
 
 seqClose(gds.data)
