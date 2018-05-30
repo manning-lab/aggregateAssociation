@@ -18,6 +18,10 @@ label <- input_args[1]
 assoc.files <- unlist(strsplit(input_args[2],","))
 var.info <- list()
 
+# remove any empty files because R apparently can't handle loading an empty file.
+info = file.info(assoc.files)
+assoc.files = rownames(info[!(info$size == 0), ])
+
 if (length(assoc.files) == 0){
   fwrite(list(),paste(label, ".assoc.csv", sep=""),sep=",",row.names=F)
   fwrite(list(), paste(label, ".topassoc.csv", sep=""),row.names=F)
