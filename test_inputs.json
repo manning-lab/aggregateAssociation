@@ -1,5 +1,5 @@
 {
-  "group_assoc_wf.this_group_file": "test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.groups.csv",
+  "group_assoc_wf.this_group_file": "test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.MAC10.01p.groups.csv",
   "group_assoc_wf.this_label": "demo_1000_genomes",
   "group_assoc_wf.this_sample_file": "test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.sample.ids.txt",
   "group_assoc_wf.this_pval": "kuonen",
@@ -11,7 +11,7 @@
   "group_assoc_wf.this_phenotype_file": "test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.phenotypes.csv",
   "group_assoc_wf.this_test": "SKAT",
   "group_assoc_wf.this_disk": 1,
-  "group_assoc_wf.these_genotype_files": ["test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.gds"],
+  "group_assoc_wf.these_genotype_files": ["test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.MAC10.01p.gds"],
   "group_assoc_wf.this_covariates_string": "population,sex,last_exam_age,bmi",
   "group_assoc_wf.this_id_col": "sample_id",
   "group_assoc_wf.this_kinship_matrix": "test_inputs/ALL.chr22.phase3_shapeit2_mvncall_integrated_v5a.20130502.grm.RData"
