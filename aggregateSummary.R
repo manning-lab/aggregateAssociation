@@ -96,7 +96,7 @@ par(mfrow=c(2,1))
 
 # qq plot
 qq(as.numeric(assoc.compilation[,"pval_0"]),main=label)
-legend('topleft',c(paste0("GC = ", lam(assoc.compilation[,"pval_0"]),'/',lam(assoc.compilation[,"pval_0"],.9))))
+legend('topleft',c(paste0("GC = ", lam(assoc.compilation[,"pval_0"]))))
 manhattan(assoc.compilation,chr="chr",bp="pos",p="pval_0", main=label)
 dev.off()
 
