@@ -105,7 +105,7 @@ if (group_ext == 'RData'){
     
     # make sure chromosome in same format
     gds.chr <- seqGetData(gds.data,"chromosome")[1]
-    group.chr <- unique(group.raw$chromosome)[1]
+    group.chr <- as.character(unique(group.raw$chromosome)[1])
     
     if (startsWith(gds.chr, "chr")){
       if(!(startsWith(group.chr,"chr"))){
