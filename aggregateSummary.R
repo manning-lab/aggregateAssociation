@@ -26,7 +26,7 @@ assoc.files = rownames(info[!(info$size == 0), ])
 if (length(assoc.files) == 0){
   fwrite(list(),paste(label, ".assoc.csv", sep=""),sep=",",row.names=F)
   fwrite(list(), paste(label, ".topassoc.csv", sep=""),row.names=F)
-  png(filename = paste(label,"_association_plots.png",sep=""),width = 11, height = 11, units = "in", res=800, type = "cairo")
+  png(filename = paste(label,".association.plots.png",sep=""),width = 11, height = 11, units = "in", res=800, type = "cairo")
   dev.off()
   
 } else {

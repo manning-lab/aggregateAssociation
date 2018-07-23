@@ -93,6 +93,7 @@ task aggAssocTest {
 task summary {
 	String label
 	Array[File] assoc
+	Float minmac
 
 	Int memory
 	Int disk
@@ -105,7 +106,7 @@ task summary {
 		echo "disk: ${disk}" >> summary_out.log
 		echo "" >> summary_out.log
 		dstat -c -d -m --nocolor 10 1>>summary_out.log &
-		R --vanilla --args ${label} ${sep = ',' assoc} < /aggregateAssociation/aggregateSummary.R
+		R --vanilla --args ${label} ${sep = ',' assoc} ${minmac} < /aggregateAssociation/aggregateSummary.R
 	}
 	
 	runtime {
@@ -115,9 +116,12 @@ task summary {
 	}
 
 	output {
-		File plots = "${label}_association_plots.png"
+		File plots = "${label}.association.plots.png"
 		File assoc_res = "${label}.groupAssoc.csv"
 		File assoc_res_variants = "${label}.all.variants.groupAssoc.csv"
+		File mac_plots = "${label}.cummac.*.association.plots.png"
+		File mac_assoc_res = "${label}.cummac.*.groupAssoc.csv"
+		File mac_assoc_res_variants = "${label}.cummac.*.all.variants.groupAssoc.csv"
 		File log = "summary_out.log"
 	}
 }
@@ -141,6 +145,9 @@ workflow group_assoc_wf {
 	String? this_pval
 	String? this_weights
 	String? this_force_maf
+
+	# summary inputs
+	Float? this_minmac
 	
 	# other inputs
 	Int this_fitNull_memory
@@ -166,7 +173,7 @@ workflow group_assoc_wf {
 	
 
 		call summary {
-			input: assoc = aggAssocTest.assoc, label = this_label, memory = this_summary_memory, disk = this_disk
+			input: assoc = aggAssocTest.assoc, label = this_label, minmac = this_minmac, memory = this_summary_memory, disk = this_disk
 		}
 	}
 
@@ -181,7 +188,7 @@ workflow group_assoc_wf {
 	
 
 		call summary as summary_null_in {
-			input: assoc = aggAssocTest_null_in.assoc, label = this_label, memory = this_summary_memory, disk = this_disk
+			input: assoc = aggAssocTest_null_in.assoc, label = this_label, minmac = this_minmac, memory = this_summary_memory, disk = this_disk
 		}
 	}
 }
