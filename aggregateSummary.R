@@ -16,6 +16,7 @@ lapply(packages, library, character.only = TRUE)
 input_args <- commandArgs(trailingOnly=T)
 label <- input_args[1]
 assoc.files <- unlist(strsplit(input_args[2],","))
+minmac <- as.numeric(input_args[3])
 var.info <- list()
 
 # remove any empty files because R apparently can't handle loading an empty file.
@@ -91,7 +92,7 @@ lam = function(x,p=.5){
   round((quantile(chisq,p)/qchisq(p,1)),2)
 }
 
-png(filename = paste(label,"_association_plots.png",sep=""),width = 11, height = 22, units = "in", res=800, type = "cairo")
+png(filename = paste(label,".association.plots.png",sep=""),width = 11, height = 22, units = "in", res=800)#, type = "cairo")
 par(mfrow=c(2,1))
 
 # qq plot
@@ -103,4 +104,30 @@ dev.off()
 write.csv(assoc.compilation, paste(label, ".groupAssoc.csv", sep=""))
 var.df = do.call(rbind,var.info)
 fwrite(var.df, file = paste(label, ".all.variants.groupAssoc.csv", sep=""), row.names = F)
+
+# now make the mac thresholded plots
+var.df$mac <- 2*var.df$n.obs*var.df$freq
+
+cummac <- data.frame(group = row.names(assoc.compilation), cummac = NA, stringsAsFactors = F)
+# get cum mac per group
+for (gind in seq(1,nrow(assoc.compilation))){
+  g <- row.names(assoc.compilation)[gind]
+  cummac[cummac$group == g, ]$cummac <- sum(var.df[var.df$group == g,]$mac)
+}
+assoc.compilation$group <- row.names(assoc.compilation)
+assoc.compilation <- merge(assoc.compilation, cummac, by.x = "group", by.y = "group", all.x = T)
+assoc.compilation <- assoc.compilation[assoc.compilation$cummac > minmac,]
+
+png(filename = paste(label,".cummac.",as.character(minmac),".association.plots.png",sep=""),width = 11, height = 22, units = "in", res=800)#, type = "cairo")
+par(mfrow=c(2,1))
+
+# qq plot
+qq(as.numeric(assoc.compilation[,"pval_0"]),main=label)
+legend('topleft',c(paste0("GC = ", lam(assoc.compilation[,"pval_0"]))))
+manhattan(assoc.compilation,chr="chr",bp="pos",p="pval_0", main=label)
+dev.off()
+
+write.csv(assoc.compilation, paste(label,".cummac.",as.character(minmac), ".groupAssoc.csv", sep=""))
+var.df = do.call(rbind,var.info)
+fwrite(var.df, file = paste(label,".cummac.",as.character(minmac), ".all.variants.groupAssoc.csv", sep=""), row.names = F)
 
