@@ -101,8 +101,10 @@ legend('topleft',c(paste0("GC = ", lam(assoc.compilation[,"pval_0"]))))
 manhattan(assoc.compilation,chr="chr",bp="pos",p="pval_0", main=label)
 dev.off()
 
-write.csv(assoc.compilation, paste(label, ".groupAssoc.csv", sep=""))
+assoc.compilation$MarkerName <- rownames(assoc.compilation)
+write.csv(assoc.compilation, paste(label, ".groupAssoc.csv", sep=""),row.names=FALSE,quote=FALSE)
 var.df = do.call(rbind,var.info)
+
 fwrite(var.df, file = paste(label, ".all.variants.groupAssoc.csv", sep=""), row.names = F)
 
 # now make the mac thresholded plots
