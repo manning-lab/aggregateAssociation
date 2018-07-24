@@ -93,7 +93,7 @@ task aggAssocTest {
 task summary {
 	String label
 	Array[File] assoc
-	Float minmac
+	Float? minmac
 
 	Int memory
 	Int disk
@@ -106,7 +106,7 @@ task summary {
 		echo "disk: ${disk}" >> summary_out.log
 		echo "" >> summary_out.log
 		dstat -c -d -m --nocolor 10 1>>summary_out.log &
-		R --vanilla --args ${label} ${sep = ',' assoc} ${minmac} < /aggregateAssociation/aggregateSummary.R
+		R --vanilla --args ${label} ${sep = ',' assoc} ${default="10" minmac} < /aggregateAssociation/aggregateSummary.R
 	}
 	
 	runtime {
@@ -119,9 +119,9 @@ task summary {
 		File plots = "${label}.association.plots.png"
 		File assoc_res = "${label}.groupAssoc.csv"
 		File assoc_res_variants = "${label}.all.variants.groupAssoc.csv"
-		File mac_plots = "${label}.cummac.*.association.plots.png"
-		File mac_assoc_res = "${label}.cummac.*.groupAssoc.csv"
-		File mac_assoc_res_variants = "${label}.cummac.*.all.variants.groupAssoc.csv"
+		File mac_plots = select_first(glob("${label}.cummac.*.association.plots.png"))
+		File mac_assoc_res = select_first(glob("${label}.cummac.*.groupAssoc.csv"))
+		File mac_assoc_res_variants = select_first(glob("${label}.cummac.*.all.variants.groupAssoc.csv"))
 		File log = "summary_out.log"
 	}
 }
