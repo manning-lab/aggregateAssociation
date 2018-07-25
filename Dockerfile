@@ -12,4 +12,6 @@ RUN echo "install.packages(c('data.table','dplyr','tidyr','qqman','stringr'), re
 	R --vanilla < install.R && \
 	rm install.R
 
-RUN git clone https://github.com/manning-lab/aggregateAssociation.git
+RUN git clone https://github.com/manning-lab/aggregateAssociation.git && \
+	cd aggregateAssociation && \
+	git pull origin master
