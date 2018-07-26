@@ -93,7 +93,8 @@ task aggAssocTest {
 task summary {
 	String label
 	Array[File] assoc
-	Float? minmac
+	Int? minmac
+	String real_minmac = select_first([minmac, "10"])
 
 	Int memory
 	Int disk
@@ -119,9 +120,9 @@ task summary {
 		File plots = "${label}.association.plots.png"
 		File assoc_res = "${label}.groupAssoc.csv"
 		File assoc_res_variants = "${label}.all.variants.groupAssoc.csv"
-		File mac_plots = select_first(glob("${label}.cummac.*.association.plots.png"))
-		File mac_assoc_res = select_first(glob("${label}.cummac.*.groupAssoc.csv"))
-		File mac_assoc_res_variants = select_first(glob("${label}.cummac.*.all.variants.groupAssoc.csv"))
+		File mac_plots = "${label}.cummac.${real_minmac}.association.plots.png"
+		File mac_assoc_res = "${label}.cummac.${real_minmac}.groupAssoc.csv"
+		File mac_assoc_res_variants = "${label}.cummac.${real_minmac}.all.variants.groupAssoc.csv"
 		File log = "summary_out.log"
 	}
 }
@@ -147,7 +148,7 @@ workflow group_assoc_wf {
 	String? this_force_maf
 
 	# summary inputs
-	Float? this_minmac
+	Int? this_minmac
 	
 	# other inputs
 	Int this_fitNull_memory
