@@ -138,6 +138,6 @@ if (nrow(assoc.compilation) == 0 ){
   dev.off()
 
   write.csv(assoc.compilation, paste(label,".cummac.",as.character(minmac), ".groupAssoc.csv", sep=""))
-  var.df = do.call(rbind,var.info)
+  # var.df = do.call(rbind,var.info)
   fwrite(var.df, file = paste(label,".cummac.",as.character(minmac), ".all.variants.groupAssoc.csv", sep=""), row.names = F)
 }
