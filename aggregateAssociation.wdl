@@ -33,7 +33,7 @@ task fitNull {
 	runtime {
 		docker: "manninglab/aggregateassociation:latest"
 		disks: "local-disk ${disk} SSD"
-		memory: "${memory}G"
+		memory: "${memory} G"
 	}
 
 	output {
@@ -80,7 +80,7 @@ task aggAssocTest {
 	runtime {
 		docker: "manninglab/aggregateassociation:latest"
 		disks: "local-disk ${disk} SSD"
-		memory: "${memory}G"
+		memory: "${memory} G"
 	}
 
 	output {
@@ -113,7 +113,7 @@ task summary {
 	runtime {
 		docker: "manninglab/aggregateassociation:latest"
   	    disks: "local-disk ${disk} SSD"
-		memory: "${memory}G"
+		memory: "${memory} G"
 	}
 
 	output {
