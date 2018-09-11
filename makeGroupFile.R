@@ -87,6 +87,9 @@ var.region$maf <- pmin(var.region$maf, 1-var.region$maf)
 # Subset by passing variants
 var.region <- var.region[var.region$filter == "PASS",]
 
+# Remove mono-allele variants
+var.region <- var.region[var.region$maf > 0,]
+
 # Check for maf filter argument and filter if input
 if (min.maf != "NA") { var.region <- var.region[var.region$maf > as.numeric(min.maf),] }
 if (max.maf != "NA") { var.region <- var.region[var.region$maf < as.numeric(max.maf),] }

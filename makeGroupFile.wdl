@@ -22,7 +22,7 @@ task makeGroups {
 	}
 
 	output {
-		File group_file = "${out_pref}.{index}.csv"
+		File group_file = "${out_pref}.${index}.csv"
 	}
 }
 
@@ -40,7 +40,7 @@ task combineGroups {
 		echo "all.g[[length(all.g)+1]] <- fread(g, data.table = F, stringsAsFactors = F)}" >> script.R && \
 		echo "all.g <- do.call(rbind,all.g)" >> script.R && \
 		echo "write.table(all.g, file=paste0(out.pref,'.csv'), quote = F, sep = ',', row.names = F)" >> script.R && \
-		R --vanilla --args ${sep="," groups} ${out_pref} < script.R
+		R --vanilla --args ${sep="," these_groups} ${out_pref} < script.R
 	>>>
 
 	runtime {
