@@ -95,12 +95,74 @@ Outputs:
 * mac_assoc_res_variants : association results for all variants in groups thresholded by minmac  (CSV)
 * log : log file containing paths to inputs and memory and cpu usage
 
-## Other workflow inputs
+### Other workflow inputs
 
 * this_fitNull_memory : amount of memory in GB for fitNull task (int)
 * this_aggAssocTest_memory : amount of memory in GB for aggAssocTest task (int)
 * this_summary_memory : amount of memory in GB for summary task (int)
 * this_disk : amount of disk space in GB to allot for each execution of a task (int)
 
+# Making aggregation units -- makeGroupFile
+
+## Description 
+
+This workflow helps make the approriate aggregation unit file for association testing (as input to Aggregate Association). 
+
+### Authors
+
+This workflow is produced and maintained by the [Manning Lab](https://manning-lab.github.io/). Contributing authors include:
+
+* Tim Majarian (tmajaria@broadinstitute.org)
+
+## Dependencies
+
+### Workflow execution
+
+This workflow is written with a WDL wrapper for portability. Each task can be run individually from the base script or within the full workflow.
+
+* [WDL](https://software.broadinstitute.org/wdl/documentation/quickstart)
+* [Chromwell](http://cromwell.readthedocs.io/en/develop/)
+
+### R packages
+
+All code and necessary packages are available through a [Docker image](https://hub.docker.com/r/manninglab/aggregateassociation/) as well as through the [Github repository](https://github.com/manning-lab/aggregateAssociation).
+
+* [SeqVarTools](https://www.bioconductor.org/packages/release/bioc/html/SeqVarTools.html)
+* [GenomicRanges](https://bioconductor.org/packages/release/bioc/html/GenomicRanges.html)
+* [dplyr](https://dplyr.tidyverse.org/)
+* [tidyr](https://tidyr.tidyverse.org/)
+* [stringr](https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html)
+* [data.table](https://cran.r-project.org/web/packages/data.table/index.html)
+* [qqman](https://cran.r-project.org/web/packages/qqman/index.html)
+
+## Main Functions
+
+*Italics* indicate optional inputs. Each function also requires the user to specify allocated memory and disk space.
+
+### makeGroups
+
+This function gets variant level information for all variants falling within input regions or an optional variant file
+
+Inputs:
+* genotype_file : genotype data for all samples (GDS file)
+* region_file : file containing regions of interest with a single genomic interval per line. The column format of this file should be chromosome, start, end, name, annotation with *name* being the proposed group id for that region. Each defined interval (or group of intervals that have the same name) defines a single aggregation unit. (CSV or TSV file)
+* *variant_file* : optional file containing variants to be added to the interval based aggregation units. Column format should be chromosome, position, ref, alt, groiup_id, annotation. (CSV or TSV file)
+* *max_maf* : maximum minor allele frequency to consider when aggregating variants (float)
+* *min_maf* : minimum minor allele frequency to consider when aggregating variants (float)
+* out_pref : prefix for the output file name (string)
+
+Outputs:
+* group_file : file containing variant level information for all aggregation units contained in the input genotype file (CSV file)
+
+### combineGroups
+
+This function combines variant level information output from *makeGroups* into a single aggregation file.
+
+Inputs:
+* these_groups : output from makeGroups (array of CSV files)
+* out_pref : prefix for the output file name (string)
+
+Outputs:
+* final_groups : file containing variant level information for all aggregation units over all genotype files (CSV file)
 
 
