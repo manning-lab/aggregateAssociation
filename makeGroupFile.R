@@ -173,6 +173,9 @@ if (variant.file != "NA"){
   var.region <- rbind(var.region, var.variants)
 }
 
+# make sure we dont have duplicated variants
+var.region <- var.region[!duplicated(var.region[,c("chr","pos","ref","alt","group_id")]),]
+
 # close genotype file
 seqClose(gds.data)
 
