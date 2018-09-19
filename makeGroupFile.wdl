@@ -45,8 +45,8 @@ task combineGroups {
 
 	runtime {
 		docker: "manninglab/aggregateassociation:latest"
-		disks: "local-disk 20 SSD"
-		memory: "7 GB"
+		disks: "local-disk 50 SSD"
+		memory: "20 GB"
 	}
 
 	output {
