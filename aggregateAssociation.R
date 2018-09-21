@@ -49,10 +49,30 @@ getAggList <- function(gds, variants.orig){
 .expandAlleles <- function(gds) {
   .variantDF(gds) %>%
     separate_rows_("alt", sep=",") %>%
-    rename_(allele="alt") %>%
     group_by_("variant.id") %>%
     mutate_(allele.index=~1:n()) %>%
     as.data.frame()
+}
+
+.checkHeader <- function(agglist) {
+  cols <- colnames(agglist)
+  if ( !( any( c( "chr","chromosome","chrom" ) %in% tolower(cols) ) ) ) { return(F) }
+  if ( !( any( c( "pos","position" ) %in% tolower(cols) ) ) ) { return(F) }
+  if ( !( any( c( "ref","reference","allele1","a1" ) %in% tolower(cols) ) ) ) { return(F) }
+  if ( !( any( c( "alt","alternate","allele2","a2" ) %in% tolower(cols) ) ) ) { return(F) }
+  if ( !( any( c( "group.id","group_id","group" ) %in% tolower(cols) ) ) ) { return(F) }
+  return(T)
+}
+
+.fixHeader <- function(agglist) {
+  cols <- colnames(agglist)
+  cols[tolower(cols) %in% c( "chr","chromosome","chrom" )] <- "chromosome"
+  cols[tolower(cols) %in% c( "pos","position" )] <- "position"
+  cols[tolower(cols) %in% c( "ref","reference","allele1","a1" )] <- "ref"
+  cols[tolower(cols) %in% c( "alt","alternate","allele2","a2" )] <- "alt"
+  cols[tolower(cols) %in% c( "group.id","group_id","group" )] <- "group.id"
+  colnames(agglist) <- cols
+  return( agglist )
 }
 
 # Load nullfile
@@ -80,16 +100,18 @@ if (group_ext == 'RData'){
   # load group file
   group.raw <- fread(group.file, data.table=F)
   
-  names(group.raw)[names(group.raw)=="group_id"] <- "group.id"
-  # check if group ids in file
-  if (!("group.id" %in% names(group.raw))){
-    stop("Group file must have column for group ids named group.id")
+  # check header of group file
+  if ( !( .checkHeader( group.raw ) ) ) {
+    stop("Group file must have the minimal column headers of chr,pos,ref,alt,group")
   }
+  
+  # fix header of group file
+  group.raw <- .fixHeader( group.raw )
   
   # check if group file already has required columns
   #  variant.id matching the variant.id in seqData for the variants that should be aggregated, and allele.index
   if (!all(c("group.id","variant.id", "allele.index") %in% names(group.raw))){
-    # assume group file has at least group.id, chr, pos, ref, alt
+    
     # need to match with variant data; get variant.id and position
     var.df <- data.frame(variant.id = seqGetData(gds.data, "variant.id"), pos = seqGetData(gds.data, "position"))
     
@@ -120,7 +142,7 @@ if (group_ext == 'RData'){
     }
     
     # merge over pos, ref, and alt
-    var.df <- merge(var.df, group.raw, by.x=c('chromosome','position','ref','allele'), by.y=c('chromosome','position','ref','alt'))
+    var.df <- merge(var.df, group.raw, by.x=c('chromosome','position','ref','alt'), by.y=c('chromosome','position','ref','alt'))
     
     # filter to those variants in both gds and groups
     seqSetFilter(gds.data,variant.id=var.df$variant.id)
@@ -131,30 +153,24 @@ if (group_ext == 'RData'){
     # stop if we have no variants
     if(length(seqGetData(gds.data, "variant.id")) == 0){
       system(paste("touch ",label, ".assoc.RData", sep=""))
-    # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
       system(paste("touch ",label, ".groups.RData", sep=""))
-    # save(groups, file=paste(label, ".groups.RData", sep=""))
       print("No variants were found in genotype file for the input aggregation units, returning empty.")
       has.var <- F
     } else {
     
       # add the maf to the groups
-      ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L, .progress = T)
+      ref.freq <- seqAlleleFreq(gds.data, ref.allele=0L)
       
       # force alt to be lower maf allele
       if (startsWith(tolower(force.maf), "f")){
         var.df$maf <- ref.freq
       } else {
         # get the right alt index
-        alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), alt.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
+        alt.id <- data.frame(variant.id = seqGetData(gds.data,"variant.id"), allele.index = ifelse(ref.freq < 1-ref.freq, 0, 1), maf = pmin(ref.freq, 1-ref.freq))
+        alt.id$mac <- seqAlleleCount(gds.data, ref.allele = alt.id$allele.index)
         
         # merge with group file
-        var.df <- merge(var.df,alt.id, by.x = "variant.id", by.y = "variant.id")
-        
-        # rename cols
-        var.df <- var.df[,names(var.df)[names(var.df)!= "allele.index"]]
-        names(var.df)[names(var.df)== "alt.index"] <- "allele.index"
-        names(var.df)[names(var.df)== "maf.x"] <- "maf"
+        var.df <- merge(var.df[,names(var.df)[!(names(var.df) %in% c("allele.index","maf"))] ], alt.id, by.x = "variant.id", by.y = "variant.id")
       }
     }
   } else {
@@ -169,6 +185,9 @@ if (group_ext == 'RData'){
     for (gid in unique(var.df$group.id)){
       groups[[as.character(gid)]] <- var.df[var.df$group.id == gid,]
     }
+    
+    # remove old df
+    rm(var.df)
   }
 } else {
   stop("Group file does not have the required extension")
@@ -177,7 +196,7 @@ if (group_ext == 'RData'){
 if (has.var) {
 
   # make sure we have no duplicates
-  groups = groups[!duplicated(names(groups))]
+  groups <- groups[!duplicated(names(groups))]
 
   # groups to data frame
   groups.df <- do.call(rbind,groups)
@@ -188,12 +207,14 @@ if (has.var) {
     assoc$results = assoc$results[order(assoc$results$pval_0),]
     for (group_name in names(assoc$variantInfo)){
       assoc$results[group_name,"MAF"] <- mean(assoc$variantInfo[[group_name]]$freq)
+      assoc$variantInfo[[group_name]] <- merge(assoc$variantInfo[[group_name]], groups.df[,c("variant.id","ref", "alt", "position","allele.index","mac")], by.x = "variantID", by.y = "variant.id")
+      assoc$results[group_name,"MAC"] <- sum(assoc$variantInfo[[group_name]]$mac, na.rm = T)
     }
     
     # add ref/alt to assoc variants
-    for (g in names(assoc$variantInfo)){
-      assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
-    }
+    # for (g in names(assoc$variantInfo)){
+      
+    # }
     
     save(assoc, file=paste(label, ".assoc.RData", sep=""))
     save(groups, file=paste(label, ".groups.RData", sep=""))
@@ -207,7 +228,7 @@ if (has.var) {
     
     # add ref/alt to assoc variants
     for (g in names(assoc$variantInfo)){
-      assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "allele", "position","allele.index")], by.x = "variantID", by.y = "variant.id")
+      assoc$variantInfo[[g]] <- merge(assoc$variantInfo[[g]], groups.df[,c("variant.id","ref", "alt", "position","allele.index","mac")], by.x = "variantID", by.y = "variant.id")
     }
     
     save(assoc, file=paste(label, ".assoc.RData", sep=""))
@@ -215,9 +236,7 @@ if (has.var) {
     
   } else {
     system(paste("touch ",label, ".assoc.RData", sep=""))
-    # fwrite(list(), file=paste(label, ".assoc.RData", sep=""))
     system(paste("touch ",label, ".groups.RData", sep=""))
-    # save(groups, file=paste(label, ".groups.RData", sep=""))
   }
 }
 
